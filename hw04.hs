@@ -52,6 +52,11 @@ plus (P p1) (P p2) = let len = max (length p1) (length p2)
 instance (Num a) => Num (Poly a) where
     (+) = plus
     (*) = times
+    negate (P p) = P $ map negate p
+    fromInteger = P . (:[]) . fromInteger
+    --
+    abs = undefined
+    signum = undefined
 
 exercise4 :: IO ()
 exercise4 = do
@@ -65,7 +70,38 @@ times (P p1) (P p2) = let (less, big) | length p1 > length p2 = (p1, p2)
                                       | otherwise = (p2, p1)
                           indexedMult = zip [0..] big
                           timesLst = map (P . (\(idx, val) -> map (val *) (replicate idx 0 ++ less))) indexedMult
-                      in foldr (+) (P [0]) timesLst -- fromInteger function implementation is needed to use sum
+                      in sum timesLst
 
 exercise5 :: IO ()
 exercise5 = print $ P [1, 1, 1] * P [2, 2] == P [2, 4, 4, 2]
+
+-- Exercise 6
+
+exercise6 :: IO ()
+exercise6 = print $ negate (P [1, 2, 3]) == P [-1, -2, -3]
+
+-- Exercise 7
+
+applyP :: Num a => Poly a -> a -> a
+applyP (P p) x = sum $ map (\(idx, v) -> v * x ^ idx) $ zip [0..] p
+
+exercise7 :: IO ()
+exercise7 = do
+    print $ applyP (x^2 + 2*x + 1) 1 == 4
+    print $ applyP (x^2 + 2*x + 1) 2 == 9
+
+-- Exercise 8
+
+class Num a => Differentiable a where
+    deriv :: a -> a
+    nderiv :: Int -> a -> a
+    nderiv 1 p = deriv p
+    nderiv n p = deriv $ nderiv (n-1) p
+
+-- Exercise 9
+
+instance (Num a, Enum a) => Differentiable (Poly a) where
+    deriv (P p) = P $ tail $ zipWith (*) [0..] p
+
+exercise9 :: IO ()
+exercise9 = print $ deriv (x^2 + 3*x + 5) == 2*x + 3
