@@ -2,7 +2,7 @@ module Hw05 where
 
 import Data.ByteString.Lazy (ByteString)
 import Data.Bits (xor)
-
+import Parser
 import qualified Data.ByteString.Lazy as BS
 
 -- Exercise 1
@@ -27,3 +27,11 @@ exercise2 :: IO ()
 exercise2 = do
     key <- exercise1
     decryptWithKey key "clues/victims.json"
+
+-- Exercise 3
+
+parseFile :: FromJSON a => FilePath -> IO ( Maybe a )
+parseFile = (decode <$>) . BS.readFile
+
+exercise3 :: IO ()
+exercise3 = print $ parseFile "clues/victims.json" :: IO ( Maybe [TId] )
