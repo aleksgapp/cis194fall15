@@ -1,6 +1,7 @@
 module Hw05 where
 
 import Data.ByteString.Lazy (ByteString)
+import System.Environment (getArgs)
 import Data.Map.Strict (Map)
 import Data.Bits (xor)
 import Data.Maybe
@@ -74,9 +75,49 @@ exercise5 = let ts = [ Transaction { from = "Haskell Curry"
 -- Exercise 6
 
 getCriminal :: Map String Integer -> String
-getCriminal = fst . Map.findMax
+getCriminal xs = head $ Map.keys $ Map.filter (== m) xs
+    where m = maximum $ Map.elems xs
 
-exercise6 :: IO ()
-exercise6 = do
-    v <- getBadTs "clues/victims.json" "clues/transactions.json"
-    print $ Just $ (getCriminal . getFlow <$>) v
+-- Exercise 7 -----------------------------------------
+
+undoTs :: Map String Integer -> [TId] -> [Transaction]
+undoTs _ _ = []
+
+-- Exercise 8 -----------------------------------------
+
+writeJSON :: ToJSON a => FilePath -> a -> IO ()
+writeJSON _ _ = print "undefined"
+
+-- Exercise 9 -----------------------------------------
+
+doEverything :: FilePath -> FilePath -> FilePath -> FilePath -> FilePath
+             -> FilePath -> IO String
+doEverything dog1 dog2 trans vict fids out = do
+  key <- getSecret dog1 dog2
+  decryptWithKey key vict
+  mts <- getBadTs vict trans
+  case mts of
+    Nothing -> error "No Transactions"
+    Just ts -> do
+      mids <- parseFile fids
+      case mids of
+        Nothing  -> error "No ids"
+        Just ids -> do
+          let flow = getFlow ts
+          writeJSON out (undoTs flow ids)
+          return (getCriminal flow)
+
+main :: IO ()
+main = do
+  args <- getArgs
+  crim <- 
+    case args of
+      dog1:dog2:trans:vict:ids:out:_ ->
+          doEverything dog1 dog2 trans vict ids out
+      _ -> doEverything "clues/dog-original.jpg"
+                        "clues/dog.jpg"
+                        "clues/transactions.json"
+                        "clues/victims.json"
+                        "clues/new-ids.json"
+                        "clues/new-transactions.json"
+  putStrLn crim
