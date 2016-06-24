@@ -81,12 +81,28 @@ getCriminal xs = head $ Map.keys $ Map.filter (== m) xs
 -- Exercise 7 -----------------------------------------
 
 undoTs :: Map String Integer -> [TId] -> [Transaction]
-undoTs _ _ = []
+undoTs flow tids =
+    let payers = getWithAmont (> 0)
+        payees = getWithAmont (< 0)
+    in revertT payers payees tids
+    where getWithAmont fn = Map.toList $ Map.filter fn flow
+
+revertT :: [(String, Integer)] -> [(String, Integer)] -> [TId] -> [Transaction]
+revertT [] _ _ = []
+revertT _ [] _ = []
+revertT _ _ [] = error "No more transactions!"
+revertT ((payer, stolen):xs) ((payee, need):ys) (trid:ts) =
+    let newAmout = stolen + need
+        transaction = Transaction payer payee (negate need) trid
+    in case compare newAmout 0 of
+        GT -> transaction : revertT ((payer, newAmout):xs) ys ts
+        EQ -> transaction : revertT xs ys ts
+        LT -> error "Not enough money!"
 
 -- Exercise 8 -----------------------------------------
 
 writeJSON :: ToJSON a => FilePath -> a -> IO ()
-writeJSON _ _ = print "undefined"
+writeJSON path transactions = BS.writeFile path (encode transactions)
 
 -- Exercise 9 -----------------------------------------
 
@@ -110,7 +126,7 @@ doEverything dog1 dog2 trans vict fids out = do
 main :: IO ()
 main = do
   args <- getArgs
-  crim <- 
+  crim <-
     case args of
       dog1:dog2:trans:vict:ids:out:_ ->
           doEverything dog1 dog2 trans vict ids out
