@@ -49,3 +49,11 @@ sInterleave (Cons x xs) (Cons y ys) = Cons x ( Cons y ( sInterleave xs ys ) )
 
 sTake :: Int -> Stream a -> [a]
 sTake n s = take n (streamToList s)
+
+-- Exercise 6 --------------------------------
+
+nats :: Stream Integer
+nats = Cons 0 (fmap (+1) nats)
+
+ruler :: Stream Integer
+ruler = undefined
